@@ -25,6 +25,7 @@ public class OrangeHRMTests {
     public void setUp() {
         WebDriverManager.chromedriver().setup();
         driver = new ChromeDriver();
+        driver.manage().window().maximize();
         wait = new WebDriverWait(driver, Duration.ofSeconds(WAIT_TIMEOUT));
         System.out.println("\n========== STARTING ORANGEHRM TESTS ==========\n");
     }
@@ -40,31 +41,52 @@ public class OrangeHRMTests {
     public void testTC01_SuccessfulLogin() {
         testTC01_SuccessfulLoginImpl(driver, wait);
     }
-    
+
     @Test
     public void testTC02_FailedLoginWrongPassword() {
         testTC02_FailedLoginWrongPasswordImpl(driver, wait);
     }
-    
+
     @Test
     public void testTC03_LoginBlankUsername() {
         testTC03_LoginBlankUsernameImpl(driver, wait);
     }
-    
+
     @Test
     public void testTC04_LoginUIValidation() {
         testTC04_LoginUIValidationImpl(driver, wait);
     }
-    
+
     @Test
     public void testTC05_DashboardLoad() {
         testTC05_DashboardLoadImpl(driver, wait);
     }
-    
+
     @Test
     public void testTC06_SidebarMenuDashboard() {
         testTC06_SidebarMenuDashboardImpl(driver, wait);
     }
+
+    @Test
+    public void testTC07_NavigateRecruitment() {testTC07_NavigateRecruitmentImpl(driver, wait);}
+
+    @Test
+    public void testTC08_RecruitmentFilterVacancy() {testTC08_RecruitmentFilterVacancyImpl(driver, wait);}
+
+    @Test
+    public void testTC09_RecruitmentTableColumns() {testTC09_RecruitmentTableColumnsImpl(driver, wait);}
+
+    @Test
+    public void testTC10_NavigatePIM() {testTC10_NavigatePIMImpl(driver, wait);}
+
+    @Test
+    public void testTC11_PIMSearchEmployee() {testTC11_PIMSearchEmployeeImpl(driver, wait);}
+
+    @Test
+    public void testTC12_PIMFilterEmploymentStatus() {testTC12_PIMFilterEmploymentStatusImpl(driver, wait);}
+
+    @Test
+    public void testTC13_PIMAddEmployeeUI() {testTC13_PIMAddEmployeeUIImpl(driver, wait);}
     
     private void testTC01_SuccessfulLoginImpl(WebDriver driver, WebDriverWait wait) {
         try {
@@ -231,6 +253,160 @@ public class OrangeHRMTests {
             }
         } catch (Exception e) {
             System.out.println("❌ FAIL: TC-06 - " + e.getMessage());
+        }
+    }
+
+    // TC-07: Navegar al módulo Recruitment
+    private void testTC07_NavigateRecruitmentImpl(WebDriver driver, WebDriverWait wait) {
+        try {
+            driver.navigate().to(BASE_URL);
+            loginAs(driver, wait, VALID_USERNAME, VALID_PASSWORD);
+
+            wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//span[text()='Recruitment']"))).click();
+
+            wait.until(ExpectedConditions.urlContains("/recruitment"));
+            WebElement title = wait.until(ExpectedConditions.visibilityOfElementLocated(By.tagName("h6")));
+
+            if (driver.getCurrentUrl().contains("/recruitment") && title.getText().equals("Recruitment")) {
+                System.out.println("PASS: TC-07 - Navegacion a Recruitment exitosa.");
+            } else {
+                System.out.println("FAIL: TC-07 - Error en URL o título de Recruitment.");
+            }
+        } catch (Exception e) {
+            System.out.println("FAIL: TC-07 - " + e.getMessage());
+        }
+    }
+
+    // TC-08: Usar dropdown 'Vacancies' para filtrar
+    private void testTC08_RecruitmentFilterVacancyImpl(WebDriver driver, WebDriverWait wait) {
+        try {
+            driver.navigate().to(BASE_URL);
+            loginAs(driver, wait, VALID_USERNAME, VALID_PASSWORD);
+            wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//span[text()='Recruitment']"))).click();
+
+            wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//a[text()='Vacancies']"))).click();
+
+            WebElement dropdown = wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//label[text()='Vacancy']/ancestor::div[contains(@class, 'oxd-input-group')]//div[contains(@class, 'oxd-select-wrapper')]")));
+            dropdown.click();
+
+            WebElement option = wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//div[@role='listbox']//span[contains(text(), 'Software Engineer')]")));
+            option.click();
+
+            driver.findElement(By.xpath("//button[@type='submit']")).click();
+            System.out.println("PASS: TC-08 - Filtro por dropdown ejecutado correctamente.");
+        } catch (Exception e) {
+            System.out.println("FAIL: TC-08 - " + e.getMessage());
+        }
+    }
+
+    // TC-09: Validar que la tabla de candidatos muestra columnas correctas
+    private void testTC09_RecruitmentTableColumnsImpl(WebDriver driver, WebDriverWait wait) {
+        try {
+            driver.navigate().to(BASE_URL);
+            loginAs(driver, wait, VALID_USERNAME, VALID_PASSWORD);
+
+            wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//span[text()='Recruitment']"))).click();
+
+            WebElement header = wait.until(ExpectedConditions.visibilityOfElementLocated(By.className("oxd-table-header")));
+
+            String headerText = header.getText();
+
+            boolean allColumnsPresent = headerText.contains("Vacancy") &&
+                    headerText.contains("Hiring Manager") &&
+                    headerText.contains("Status") &&
+                    headerText.contains("Candidate") &&
+                    headerText.contains("Date of Application");
+
+            if (allColumnsPresent) {
+                System.out.println("PASS: TC-09 - Columnas de la tabla Recruitment validadas correctamente.");
+            } else {
+                System.out.println("FAIL: TC-09 - Faltan columnas en la tabla. Encontrado: \n" + headerText);
+            }
+        } catch (Exception e) {
+            System.out.println("FAIL: TC-09 - " + e.getMessage());
+        }
+    }
+
+    // TC-10: Navegar al módulo PIM
+    private void testTC10_NavigatePIMImpl(WebDriver driver, WebDriverWait wait) {
+        try {
+            driver.navigate().to(BASE_URL);
+            loginAs(driver, wait, VALID_USERNAME, VALID_PASSWORD);
+
+            wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//span[text()='PIM']"))).click();
+            wait.until(ExpectedConditions.urlContains("/pim"));
+
+            if (driver.getCurrentUrl().contains("/pim")) {
+                System.out.println("PASS: TC-10 - Navegacion a PIM exitosa.");
+            } else {
+                System.out.println("FAIL: TC-10 - No se pudo verificar la URL de PIM.");
+            }
+        } catch (Exception e) {
+            System.out.println("FAIL: TC-10 - " + e.getMessage());
+        }
+    }
+
+    // TC-11: Buscar empleado por nombre en PIM
+    private void testTC11_PIMSearchEmployeeImpl(WebDriver driver, WebDriverWait wait) {
+        try {
+            driver.navigate().to(BASE_URL);
+            loginAs(driver, wait, VALID_USERNAME, VALID_PASSWORD);
+            wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//span[text()='PIM']"))).click();
+
+            WebElement searchInput = wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//label[text()='Employee Name']/parent::div/following-sibling::div//input")));
+            searchInput.sendKeys("John");
+
+            driver.findElement(By.xpath("//button[@type='submit']")).click();
+
+            wait.until(ExpectedConditions.visibilityOfElementLocated(By.className("oxd-table-card")));
+            System.out.println("PASS: TC-11 - Búsqueda de empleado en PIM completada.");
+        } catch (Exception e) {
+            System.out.println("FAIL: TC-11 - " + e.getMessage());
+        }
+    }
+
+    // TC-12: Usar dropdown para ordenar lista de empleados
+    private void testTC12_PIMFilterEmploymentStatusImpl(WebDriver driver, WebDriverWait wait) {
+        try {
+            driver.navigate().to(BASE_URL);
+            loginAs(driver, wait, VALID_USERNAME, VALID_PASSWORD);
+            wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//span[text()='PIM']"))).click();
+
+            WebElement statusDropdown = wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//label[text()='Employment Status']/parent::div/following-sibling::div//i")));
+            statusDropdown.click();
+
+            wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//span[text()='Full-Time Permanent']"))).click();
+
+            driver.findElement(By.xpath("//button[@type='submit']")).click();
+            wait.until(ExpectedConditions.visibilityOfElementLocated(By.className("oxd-table-card")));
+            System.out.println("PASS: TC-12 - Filtrado por Estatus de Empleo realizado.");
+        } catch (Exception e) {
+            System.out.println("FAIL: TC-12 - " + e.getMessage());
+        }
+    }
+
+    // TC-13: Validar UI: campos visibles en formulario de empleado
+    private void testTC13_PIMAddEmployeeUIImpl(WebDriver driver, WebDriverWait wait) {
+        try {
+            driver.navigate().to(BASE_URL);
+            loginAs(driver, wait, VALID_USERNAME, VALID_PASSWORD);
+            wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//span[text()='PIM']"))).click();
+
+            wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//a[text()='Add Employee']"))).click();
+
+            boolean isFirstNameVisible = wait.until(ExpectedConditions.visibilityOfElementLocated(By.name("firstName"))).isDisplayed();
+            boolean isMiddleNameVisible = driver.findElement(By.name("middleName")).isDisplayed();
+            boolean isLastNameVisible = driver.findElement(By.name("lastName")).isDisplayed();
+            boolean isEmployeeIdVisible = driver.findElement(By.xpath("//label[text()='Employee Id']")).isDisplayed();
+
+
+            if (isFirstNameVisible && isMiddleNameVisible && isLastNameVisible && isEmployeeIdVisible) {
+                System.out.println("PASS: TC-13 - Formulario de nuevo empleado validado correctamente.");
+            } else {
+                System.out.println("FAIL: TC-13 - Elementos del formulario no son visibles.");
+            }
+        } catch (Exception e) {
+            System.out.println("FAIL: TC-13 - " + e.getMessage());
         }
     }
     
